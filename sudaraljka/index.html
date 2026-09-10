@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0e12">
+<style>html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Sudaraljka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;1,6..96,400&family=DM+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --ground:#0b0e12;
+    --plate:#141922;
+    --line:rgba(241,234,217,.14);
+    --brass:#c9a227;
+    --patina:#4fb0a5;
+    --ember:#e2603b;
+    --bone:#f1ead9;
+    --muted:#7c8595;
+    --mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --display:"Bodoni Moda",Didot,Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--ground);color:var(--bone);font-family:var(--mono);
+    -webkit-font-smoothing:antialiased;overscroll-behavior:none;
+    -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;
+  }
+  #stage{position:relative;width:100%;height:100vh;height:100dvh;overflow:hidden;background:var(--ground)}
+  #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+
+  /* ---- gravirana pločica ---- */
+  .plate{
+    position:absolute;top:0;left:0;right:0;pointer-events:none;
+    padding:calc(15px + env(safe-area-inset-top)) 18px 0 calc(18px + env(safe-area-inset-left));
+    display:flex;align-items:flex-start;justify-content:space-between;gap:14px;
+  }
+  .plate h1{
+    margin:0;font-family:var(--display);font-weight:600;
+    font-size:clamp(24px,6.4vw,34px);line-height:.95;letter-spacing:.005em;
+    color:var(--bone);text-shadow:0 1px 14px rgba(0,0,0,.7);
+  }
+  .plate .tuning{
+    margin-top:5px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--brass);
+    text-shadow:0 1px 10px rgba(0,0,0,.8);
+  }
+  .meters{display:flex;flex-direction:column;align-items:flex-end;gap:5px;text-align:right}
+  .meter{display:flex;align-items:baseline;gap:7px}
+  .meter b{font-size:9px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+  .meter span{font-size:15px;font-variant-numeric:tabular-nums;text-shadow:0 1px 10px rgba(0,0,0,.8)}
+  .meter .note{font-family:var(--display);font-style:italic;font-size:21px;color:var(--brass);line-height:1}
+
+  /* ---- letva ---- */
+  .rail{
+    position:absolute;left:0;right:0;bottom:0;
+    padding:10px 14px calc(12px + env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;gap:10px;
+    background:linear-gradient(to top,rgba(11,14,18,.93),rgba(11,14,18,.7) 60%,rgba(11,14,18,0));
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border-top:1px solid var(--line);
+    transition:transform .38s cubic-bezier(.3,.8,.3,1),opacity .3s ease;
+  }
+  #ribbon{display:block;width:100%;height:38px;border-radius:6px;background:rgba(241,234,217,.035)}
+  .knobs{display:flex;gap:14px;flex-wrap:wrap}
+  .knob{display:flex;align-items:center;gap:9px;flex:1 1 210px;min-width:0}
+  .knob label{font-size:9px;letter-spacing:.17em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  .knob .val{font-size:12px;font-variant-numeric:tabular-nums;color:var(--bone);width:52px;text-align:right;white-space:nowrap}
+  input[type=range]{flex:1;min-width:60px;-webkit-appearance:none;appearance:none;height:26px;background:transparent;margin:0}
+  input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--line)}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:17px;height:17px;margin-top:-8px;border-radius:50%;
+    background:var(--brass);border:none;box-shadow:0 0 10px rgba(201,162,39,.45);
+  }
+  input[type=range]::-moz-range-track{height:1px;background:var(--line)}
+  input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;background:var(--brass);border:none}
+
+  .buttons{display:flex;gap:7px}
+  .btn{
+    flex:1 1 0;font-family:var(--mono);font-size:12px;letter-spacing:.03em;color:var(--bone);
+    padding:10px 6px;border-radius:8px;background:rgba(241,234,217,.06);
+    border:1px solid var(--line);cursor:pointer;touch-action:manipulation;white-space:nowrap;
+    transition:background .18s,border-color .18s,color .18s;
+  }
+  .btn:active{background:rgba(241,234,217,.15)}
+  .btn[aria-pressed="false"]{color:var(--muted)}
+  .btn.on{background:var(--brass);border-color:var(--brass);color:#14120a;font-weight:500}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--patina);outline-offset:2px}
+
+  /* ---- poziv na zvuk ---- */
+  .arm{
+    position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    padding:16px 24px;border-radius:14px;
+    background:rgba(11,14,18,.72);border:1px solid var(--brass);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    font-size:13px;letter-spacing:.03em;cursor:pointer;
+    box-shadow:0 10px 40px rgba(0,0,0,.6);
+    transition:opacity .4s ease,transform .4s ease;
+  }
+  .arm .big{font-family:var(--display);font-style:italic;font-size:20px;color:var(--brass)}
+  .arm.gone{opacity:0;transform:translate(-50%,-50%) scale(.94);pointer-events:none}
+  .hint{font-size:10px;color:var(--muted);letter-spacing:.02em;text-align:center;line-height:1.45}
+
+  @media (min-width:680px){
+    .rail{padding:12px 22px calc(14px + env(safe-area-inset-bottom))}
+    #ribbon{height:46px}
+  }
+  @media (prefers-reduced-motion:reduce){ .rail,.arm{transition:none} }
+</style>
+
+</head>
+<body>
+<div id="stage">
+  <canvas id="cv"></canvas>
+
+  <div class="plate">
+    <div>
+      <h1>Sudaraljka</h1>
+      <div class="tuning" id="tuning">7 stranica &middot; D-dorska</div>
+    </div>
+    <div class="meters">
+      <div class="meter"><b>ton</b><span class="note" id="mNote">&mdash;</span></div>
+      <div class="meter"><b>kuglica</b><span id="mBalls">0</span></div>
+      <div class="meter"><b>udaraca</b><span id="mHits">0</span></div>
+    </div>
+  </div>
+
+  <div class="rail">
+    <canvas id="ribbon"></canvas>
+    <div class="knobs">
+      <div class="knob">
+        <label for="sides">stranice</label>
+        <input type="range" id="sides" min="3" max="12" step="1" value="7">
+        <div class="val" id="vSides">7</div>
+      </div>
+      <div class="knob">
+        <label for="spin">vrtnja</label>
+        <input type="range" id="spin" min="-60" max="60" step="1" value="14">
+        <div class="val" id="vSpin">14&deg;/s</div>
+      </div>
+      <div class="knob">
+        <label for="grav">gravitacija</label>
+        <input type="range" id="grav" min="0" max="2.4" step="0.05" value="1">
+        <div class="val" id="vGrav">1.00 g</div>
+      </div>
+    </div>
+    <div class="buttons">
+      <button class="btn" id="add">+ Kuglica</button>
+      <button class="btn" id="clear">Očisti</button>
+      <button class="btn on" id="sound" aria-pressed="true">Zvuk</button>
+    </div>
+    <div class="hint">Dodirni platno da ubaciš kuglicu. Svaka stranica mnogokuta je jedan stupanj ljestvice &mdash; više stranica, širi raspon.</div>
+  </div>
+
+  <div class="arm" id="arm" role="button" tabindex="0">
+    <div class="big">Dodirni za zvuk</div>
+    <div class="hint">iOS budi zvuk tek na dodir</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var stage = document.getElementById('stage');
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  var trail = document.createElement('canvas'), tctx = trail.getContext('2d');
+  var rib = document.getElementById('ribbon'), rctx = rib.getContext('2d');
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- glazba ----------
+  // D-dorska: svijetli mol. Stranica i -> stupanj i, oktava se penje svakih 7.
+  var SCALE = [0, 2, 3, 5, 7, 9, 10];
+  var NAMES = ['C','Cis','D','Dis','E','F','Fis','G','Gis','A','B','H']; // hrvatski: H = B, B = Bes
+  var BASE_MIDI = 50; // D3
+
+  function midiOf(face){ return BASE_MIDI + SCALE[face % 7] + 12 * Math.floor(face / 7); }
+  function freqOf(m){ return 440 * Math.pow(2, (m - 69) / 12); }
+  function nameOf(m){ return NAMES[m % 12] + (Math.floor(m / 12) - 1); }
+
+  var actx = null, bus = null, wet = null, voices = 0, lastFace = [];
+  function initAudio(){
+    if(actx) return;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return;
+    actx = new AC();
+    var comp = actx.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.ratio.value = 8; comp.attack.value = 0.004; comp.release.value = 0.22;
+    comp.connect(actx.destination);
+    bus = actx.createGain(); bus.gain.value = 0.9; bus.connect(comp);
+
+    // odjek: impulsni odziv od šuma s eksponencijalnim gašenjem
+    var len = Math.floor(actx.sampleRate * 2.4);
+    var ir = actx.createBuffer(2, len, actx.sampleRate);
+    for(var c = 0; c < 2; c++){
+      var d = ir.getChannelData(c);
+      for(var i = 0; i < len; i++){
+        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
+      }
+    }
+    var conv = actx.createConvolver(); conv.buffer = ir;
+    wet = actx.createGain(); wet.gain.value = 0.34;
+    wet.connect(conv); conv.connect(comp);
+  }
+
+  // FM zvono (Chowning): nosilac + neharmonijski modulator, brzi napad, dugi rep
+  function pluck(face, amp){
+    if(!actx || !soundOn) return;
+    var now = actx.currentTime;
+    if(now - (lastFace[face] || 0) < 0.045) return;  // isti ton ne udvostručuj
+    if(voices > 15) return;
+    lastFace[face] = now;
+    voices++;
+
+    var f = freqOf(midiOf(face));
+    var car = actx.createOscillator(), mod = actx.createOscillator();
+    var mgain = actx.createGain(), g = actx.createGain();
+    car.type = 'sine'; mod.type = 'sine';
+    car.frequency.value = f;
+    mod.frequency.value = f * 1.41;              // neharmonijski omjer -> metalni prizvuk
+    mgain.gain.setValueAtTime(f * 2.2, now);
+    mgain.gain.exponentialRampToValueAtTime(f * 0.05, now + 0.5);
+    mod.connect(mgain); mgain.connect(car.frequency);
+
+    var dur = 1.3 + 220 / f;
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(amp, now + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    car.connect(g); g.connect(bus); g.connect(wet);
+    car.start(now); mod.start(now);
+    car.stop(now + dur + 0.05); mod.stop(now + dur + 0.05);
+    car.onended = function(){ voices--; };
+  }
+
+  // ---------- stanje ----------
+  var S = {
+    sides: 7,
+    spin: reduce ? 0 : 14 * Math.PI / 180,
+    grav: 1,
+    theta: -Math.PI / 2
+  };
+  var soundOn = true, armed = false;
+  var balls = [], hits = [], hitCount = 0, flash = [];
+  var W = 0, H = 0, dpr = 1, M = 1, CX = 0, CY = 0, R = 1, BR = 1;
+
+  function hueOf(face){
+    var span = Math.max(S.sides - 1, 1);
+    return 172 - 158 * Math.min(face / span, 1);   // patina -> mjed -> žar
+  }
+
+  function addBall(x, y){
+    if(balls.length >= 26) return;
+    balls.push({
+      x: (x === undefined ? CX + (Math.random() - 0.5) * R * 0.5 : x),
+      y: (y === undefined ? CY - R * 0.45 : y),
+      vx: (Math.random() - 0.5) * M * 0.35,
+      vy: 0,
+      r: BR * (0.78 + Math.random() * 0.5),
+      hue: 40,
+      glow: 0
+    });
+  }
+
+  function resize(){
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var r = stage.getBoundingClientRect();
+    var w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+    if(w === W && h === H) return;
+    var k = M ? Math.min(w, h) / M : 0;
+    W = w; H = h;
+    cv.width = W; cv.height = H; trail.width = W; trail.height = H;
+    M = Math.min(W, H); CX = W / 2; CY = H / 2; R = M * 0.40; BR = M * 0.028;
+    if(k){ for(var i = 0; i < balls.length; i++){
+      var b = balls[i];
+      b.x = CX + (b.x - CX) * k; b.y = CY + (b.y - CY) * k;
+      b.vx *= k; b.vy *= k; b.r *= k;
+    }}
+    tctx.fillStyle = '#0b0e12'; tctx.fillRect(0, 0, W, H);
+
+    var rr = rib.getBoundingClientRect();
+    rib.width = Math.max(1, Math.round(rr.width * dpr));
+    rib.height = Math.max(1, Math.round(rr.height * dpr));
+  }
+
+  // ---------- fizika ----------
+  function step(dt){
+    S.theta += S.spin * dt;
+    var n = S.sides, apo = R * Math.cos(Math.PI / n), g = S.grav * M * 0.95;
+
+    for(var bi = 0; bi < balls.length; bi++){
+      var b = balls[bi];
+      b.vy += g * dt;
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      b.glow *= 0.90;
+
+      // najdublji prodor kroz neku od stranica
+      var worst = -1e9, wi = 0, nx = 0, ny = 0;
+      for(var i = 0; i < n; i++){
+        var a = S.theta + i * 2 * Math.PI / n;
+        var ex = Math.cos(a), ey = Math.sin(a);
+        var d = (b.x - CX) * ex + (b.y - CY) * ey - apo + b.r;
+        if(d > worst){ worst = d; wi = i; nx = ex; ny = ey; }
+      }
+
+      if(worst > 0){
+        b.x -= nx * worst; b.y -= ny * worst;                 // izbaci van zida
+        var rx = b.x - CX, ry = b.y - CY;
+        var wvx = -S.spin * ry, wvy = S.spin * rx;            // zid se giba: v = ω × r
+        var vx = b.vx - wvx, vy = b.vy - wvy;
+        var vn = vx * nx + vy * ny;
+        if(vn > 0){
+          var e = 0.86;
+          vx -= (1 + e) * vn * nx; vy -= (1 + e) * vn * ny;
+          vx *= 0.995; vy *= 0.995;                            // trenje po tangenti
+          b.vx = vx + wvx; b.vy = vy + wvy;
+
+          var imp = Math.abs(vn) / M;
+          if(imp > 0.045){
+            var amp = Math.min(0.02 + imp * 0.55, 0.30);
+            pluck(wi, amp);
+            flash[wi] = 1;
+            b.hue = hueOf(wi); b.glow = 1;
+            hitCount++;
+            hits.push({face: wi, midi: midiOf(wi), t: performance.now(), amp: amp});
+            if(hits.length > 260) hits.shift();
+            mNote.textContent = nameOf(midiOf(wi));
+          }
+        }
+      }
+
+      // zaštita: ako zbog velike brzine iskoči, vrati je u sredinu
+      var dist = Math.hypot(b.x - CX, b.y - CY);
+      if(dist > R * 1.3){ b.x = CX; b.y = CY; b.vx = 0; b.vy = 0; }
+      var sp = Math.hypot(b.vx, b.vy), cap = M * 2.4;
+      if(sp > cap){ b.vx *= cap / sp; b.vy *= cap / sp; }
+    }
+  }
+
+  // ---------- crtanje ----------
+  function drawPolygon(){
+    var n = S.sides;
+    for(var i = 0; i < n; i++){
+      // vrhovi stranice i: normala je pod kutom theta + i*2pi/n
+      var na = S.theta + i * 2 * Math.PI / n;
+      var half = Math.PI / n;
+      var p0x = CX + R * Math.cos(na - half), p0y = CY + R * Math.sin(na - half);
+      var p1x = CX + R * Math.cos(na + half), p1y = CY + R * Math.sin(na + half);
+      var f = flash[i] || 0;
+      var hue = hueOf(i);
+
+      ctx.beginPath(); ctx.moveTo(p0x, p0y); ctx.lineTo(p1x, p1y);
+      ctx.lineWidth = (1.2 + 3.4 * f) * dpr;
+      ctx.strokeStyle = 'hsla(' + hue + ',' + (34 + 46 * f) + '%,' + (46 + 34 * f) + '%,' + (0.42 + 0.58 * f) + ')';
+      ctx.shadowBlur = 22 * f * dpr;
+      ctx.shadowColor = 'hsla(' + hue + ',70%,55%,' + f + ')';
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // oznaka stupnja na sredini stranice
+      if(f > 0.04){
+        var mx = (p0x + p1x) / 2 + Math.cos(na) * 13 * dpr;
+        var my = (p0y + p1y) / 2 + Math.sin(na) * 13 * dpr;
+        ctx.font = (10 * dpr) + 'px "DM Mono", monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'hsla(' + hue + ',60%,70%,' + f + ')';
+        ctx.fillText(nameOf(midiOf(i)), mx, my);
+      }
+      flash[i] = f * 0.90;
+    }
+  }
+
+  function draw(){
+    // trag: sloj koji polako blijedi, kuglice u njega ostavljaju svjetlo
+    tctx.globalCompositeOperation = 'source-over';
+    tctx.fillStyle = 'rgba(11,14,18,0.085)';
+    tctx.fillRect(0, 0, W, H);
+    tctx.globalCompositeOperation = 'lighter';
+    for(var i = 0; i < balls.length; i++){
+      var b = balls[i];
+      tctx.beginPath(); tctx.arc(b.x, b.y, b.r * 0.62, 0, 6.2832);
+      tctx.fillStyle = 'hsla(' + b.hue + ',62%,' + (26 + 34 * b.glow) + '%,0.5)';
+      tctx.fill();
+    }
+    tctx.globalCompositeOperation = 'source-over';
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(trail, 0, 0);
+    drawPolygon();
+
+    for(var j = 0; j < balls.length; j++){
+      var q = balls[j];
+      var gl = ctx.createRadialGradient(q.x, q.y, 0, q.x, q.y, q.r * (1.7 + q.glow));
+      gl.addColorStop(0, 'hsla(' + q.hue + ',75%,' + (62 + 26 * q.glow) + '%,1)');
+      gl.addColorStop(0.55, 'hsla(' + q.hue + ',65%,42%,0.85)');
+      gl.addColorStop(1, 'hsla(' + q.hue + ',65%,42%,0)');
+      ctx.beginPath(); ctx.arc(q.x, q.y, q.r * (1.7 + q.glow), 0, 6.2832);
+      ctx.fillStyle = gl; ctx.fill();
+      ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 6.2832);
+      ctx.fillStyle = 'hsl(' + q.hue + ',48%,' + (78 + 18 * q.glow) + '%)';
+      ctx.fill();
+    }
+  }
+
+  // traka udaraca: seizmograf zadnjih 6 sekundi sviranja
+  function drawRibbon(now){
+    var w = rib.width, h = rib.height, span = 6000;
+    rctx.clearRect(0, 0, w, h);
+    rctx.fillStyle = 'rgba(241,234,217,0.05)';
+    for(var g = 1; g < 6; g++){ rctx.fillRect(w - w * g / 6, 0, 1, h); }
+    var lo = BASE_MIDI, hi = midiOf(S.sides - 1) + 1;
+    for(var i = 0; i < hits.length; i++){
+      var hit = hits[i], age = now - hit.t;
+      if(age > span) continue;
+      var x = w * (1 - age / span);
+      var y = h - h * 0.14 - (h * 0.72) * ((hit.midi - lo) / Math.max(hi - lo, 1));
+      var bh = Math.max(3 * dpr, h * 0.30 * (hit.amp / 0.30));
+      var al = 0.25 + 0.75 * (1 - age / span);
+      rctx.fillStyle = 'hsla(' + hueOf(hit.face) + ',66%,58%,' + al + ')';
+      rctx.fillRect(x - 1.4 * dpr, y - bh / 2, 2.8 * dpr, bh);
+    }
+    rctx.fillStyle = 'rgba(201,162,39,0.55)';
+    rctx.fillRect(w - 1.5 * dpr, 0, 1.5 * dpr, h);
+  }
+
+  // ---------- kontrole ----------
+  var mNote = document.getElementById('mNote'), mBalls = document.getElementById('mBalls');
+  var mHits = document.getElementById('mHits'), tuning = document.getElementById('tuning');
+  var sides = document.getElementById('sides'), spin = document.getElementById('spin'), grav = document.getElementById('grav');
+  var vSides = document.getElementById('vSides'), vSpin = document.getElementById('vSpin'), vGrav = document.getElementById('vGrav');
+  var arm = document.getElementById('arm'), soundBtn = document.getElementById('sound');
+
+  function labelScale(n){
+    return n === 5 ? 'pentatonika' : n === 7 ? 'D-dorska' : n < 5 ? 'trozvuk' : n <= 9 ? 'dorska +' : 'dva registra';
+  }
+  function syncUI(){
+    vSides.textContent = S.sides;
+    vSpin.textContent = Math.round(S.spin * 180 / Math.PI) + '°/s';
+    vGrav.textContent = S.grav.toFixed(2) + ' g';
+    tuning.textContent = S.sides + ' stranica · ' + labelScale(S.sides);
+  }
+  sides.addEventListener('input', function(){ S.sides = parseInt(sides.value, 10); flash = []; syncUI(); });
+  spin.addEventListener('input', function(){ S.spin = parseFloat(spin.value) * Math.PI / 180; syncUI(); });
+  grav.addEventListener('input', function(){ S.grav = parseFloat(grav.value); syncUI(); });
+  document.getElementById('add').addEventListener('click', function(){ addBall(); });
+  document.getElementById('clear').addEventListener('click', function(){
+    balls.length = 0; hits.length = 0; hitCount = 0; mNote.textContent = '—';
+    tctx.fillStyle = '#0b0e12'; tctx.fillRect(0, 0, W, H);
+  });
+  soundBtn.addEventListener('click', function(){
+    soundOn = !soundOn;
+    soundBtn.classList.toggle('on', soundOn);
+    soundBtn.setAttribute('aria-pressed', String(soundOn));
+    soundBtn.textContent = soundOn ? 'Zvuk' : 'Nijemo';
+  });
+
+  function wake(){
+    if(!armed){
+      armed = true; initAudio();
+      if(actx && actx.state === 'suspended') actx.resume();
+      arm.classList.add('gone');
+    } else if(actx && actx.state === 'suspended'){ actx.resume(); }
+  }
+  arm.addEventListener('click', wake);
+  arm.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' ') wake(); });
+  cv.addEventListener('pointerdown', function(e){
+    wake();
+    var r = cv.getBoundingClientRect();
+    var x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
+    if(Math.hypot(x - CX, y - CY) < R * 0.86) addBall(x, y); else addBall();
+  });
+  cv.addEventListener('touchmove', function(e){ e.preventDefault(); }, {passive:false});
+  window.addEventListener('resize', resize);
+  if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+
+  // ---------- petlja ----------
+  var last = performance.now();
+  function frame(now){
+    var dt = Math.min((now - last) / 1000, 0.05); last = now;
+    resize();
+    var sub = 2;
+    for(var s = 0; s < sub; s++) step(dt / sub);
+    draw();
+    drawRibbon(now);
+    mBalls.textContent = balls.length;
+    mHits.textContent = hitCount;
+    requestAnimationFrame(frame);
+  }
+
+  function start(){
+    resize(); syncUI();
+    for(var i = 0; i < 3; i++){
+      balls.push({
+        x: CX + (i - 1) * R * 0.36, y: CY - R * (0.28 + i * 0.14),
+        vx: (i - 1) * M * 0.10, vy: 0, r: BR * (0.85 + i * 0.16),
+        hue: hueOf(i * 2), glow: 0
+      });
+    }
+    requestAnimationFrame(frame);
+    if(window.claude && window.claude.hot && window.claude.hot.snapshot){
+      window.claude.hot.snapshot(function(){ return {sides: S.sides, hits: hitCount}; });
+    }
+  }
+  if(window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(start); else start();
+})();
+</script>
+</body>
+</html>
