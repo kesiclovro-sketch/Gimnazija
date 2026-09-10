@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#08080c">
+<style>html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Chronochrome</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  :root{
+    --ink:#08080c;
+    --ink-2:#101018;
+    --glass:rgba(255,255,255,.055);
+    --glass-line:rgba(255,255,255,.13);
+    --text:#ede9e1;
+    --muted:#8e8a98;
+    --accent:#c8ff4d;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --serif:"Instrument Serif",Georgia,"Times New Roman",serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--ink);color:var(--text);
+    font-family:var(--mono);
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior:none;
+    -webkit-user-select:none;user-select:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #stage{
+    position:relative;width:100%;height:100vh;height:100dvh;
+    overflow:hidden;background:var(--ink);
+  }
+  canvas{
+    position:absolute;inset:0;width:100%;height:100%;display:block;
+    touch-action:none;
+  }
+
+  /* ---- štoperica gore lijevo ---- */
+  .clock{
+    position:absolute;top:0;left:0;right:0;
+    padding:calc(14px + env(safe-area-inset-top)) 18px 0 calc(18px + env(safe-area-inset-left));
+    display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+    pointer-events:none;
+    transition:opacity .35s ease,transform .35s ease;
+  }
+  .brand{display:flex;flex-direction:column;gap:2px}
+  .brand h1{
+    margin:0;font-family:var(--serif);font-style:italic;font-weight:400;
+    font-size:clamp(22px,6vw,30px);line-height:1;letter-spacing:.01em;
+    text-shadow:0 1px 12px rgba(0,0,0,.55);
+  }
+  .brand .sub{
+    font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);
+    text-shadow:0 1px 8px rgba(0,0,0,.6);
+  }
+  .t-wrap{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+  .t-label{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);text-shadow:0 1px 8px rgba(0,0,0,.6)}
+  .t-value{
+    font-size:clamp(26px,8vw,38px);font-weight:500;line-height:1;
+    font-variant-numeric:tabular-nums;letter-spacing:-.02em;
+    text-shadow:0 2px 16px rgba(0,0,0,.6);
+  }
+  .t-value .ms{font-size:.52em;color:var(--muted);margin-left:.12em}
+
+  /* ---- donja ploča ---- */
+  .panel{
+    position:absolute;left:0;right:0;bottom:0;
+    padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;gap:12px;
+    background:linear-gradient(to top,rgba(6,6,10,.88),rgba(6,6,10,.62) 62%,rgba(6,6,10,0));
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-top:1px solid var(--glass-line);
+    transition:transform .38s cubic-bezier(.3,.8,.3,1),opacity .3s ease;
+  }
+  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+  .chips{display:flex;gap:6px;flex:1 1 auto;min-width:0}
+  .chip{
+    flex:1 1 0;min-width:0;
+    font-family:var(--mono);font-size:12px;letter-spacing:.04em;
+    padding:9px 6px;border-radius:999px;
+    background:var(--glass);border:1px solid var(--glass-line);color:var(--text);
+    touch-action:manipulation;cursor:pointer;
+    transition:background .18s,color .18s,border-color .18s;
+  }
+  .chip[aria-pressed="true"]{background:var(--accent);color:#0b0f02;border-color:var(--accent);font-weight:600}
+
+  .btn{
+    font-family:var(--mono);font-size:12px;letter-spacing:.04em;
+    padding:9px 14px;border-radius:10px;
+    background:var(--glass);border:1px solid var(--glass-line);color:var(--text);
+    touch-action:manipulation;cursor:pointer;white-space:nowrap;
+    transition:background .18s,border-color .18s;
+  }
+  .btn:active{background:rgba(255,255,255,.14)}
+  .btn.wide{flex:1 1 0}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .speed{display:flex;align-items:center;gap:10px;flex:1 1 180px}
+  .speed label{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  input[type=range]{
+    flex:1;-webkit-appearance:none;appearance:none;height:24px;background:transparent;margin:0;
+  }
+  input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--glass-line);border-radius:2px}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:18px;height:18px;margin-top:-8px;border-radius:50%;
+    background:var(--text);border:none;box-shadow:0 0 0 1px rgba(0,0,0,.4);
+  }
+  input[type=range]::-moz-range-track{height:2px;background:var(--glass-line);border-radius:2px}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--text);border:none}
+  .speed .val{font-size:12px;font-variant-numeric:tabular-nums;color:var(--muted);width:38px;text-align:right}
+
+  /* ---- ispis uniformi ---- */
+  .uniforms{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 14px;
+    font-size:10.5px;color:var(--muted);letter-spacing:.02em;
+    border-top:1px solid rgba(255,255,255,.07);padding-top:10px;
+  }
+  .u{display:flex;justify-content:space-between;gap:8px;min-width:0}
+  .u b{font-weight:500;color:rgba(237,233,225,.55)}
+  .u span{color:var(--text);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .swatch{display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:-1px;margin-right:5px;border:1px solid rgba(255,255,255,.25)}
+  .hint{font-size:10px;color:rgba(142,138,152,.85);letter-spacing:.01em;line-height:1.4}
+
+  /* ---- skriveni HUD ---- */
+  body.bare .panel{transform:translateY(112%);opacity:0}
+  body.bare .clock{opacity:0;transform:translateY(-8px)}
+  .peek{
+    position:absolute;right:calc(14px + env(safe-area-inset-right));
+    bottom:calc(14px + env(safe-area-inset-bottom));
+    opacity:0;pointer-events:none;transition:opacity .3s ease;
+    background:rgba(8,8,12,.6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  }
+  body.bare .peek{opacity:1;pointer-events:auto}
+
+  @media (min-width:640px){
+    .uniforms{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .panel{padding:16px 22px calc(16px + env(safe-area-inset-bottom))}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .panel,.clock,.peek{transition:none}
+  }
+</style>
+
+</head>
+<body>
+<div id="stage">
+  <canvas id="gl" aria-label="Shader koji mijenja boje ovisno o proteklom vremenu"></canvas>
+
+  <div class="clock">
+    <div class="brand">
+      <h1>Chronochrome</h1>
+      <div class="sub">vrijeme &rarr; boja</div>
+    </div>
+    <div class="t-wrap">
+      <div class="t-label">od pokretanja</div>
+      <div class="t-value"><span id="tsec">00:00</span><span class="ms" id="tms">.00</span></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel">
+    <div class="row chips" role="group" aria-label="Odabir shadera">
+      <button class="chip" id="m0" aria-pressed="true">Spektar</button>
+      <button class="chip" id="m1" aria-pressed="false">Plazma</button>
+      <button class="chip" id="m2" aria-pressed="false">Aurora</button>
+    </div>
+
+    <div class="row">
+      <div class="speed">
+        <label for="speed">brzina</label>
+        <input type="range" id="speed" min="0" max="3" step="0.05" value="1">
+        <div class="val" id="speedval">1.00&times;</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="btn wide" id="play">Pauza</button>
+      <button class="btn wide" id="reset">Reset</button>
+      <button class="btn wide" id="hide">Sakrij HUD</button>
+    </div>
+
+    <div class="uniforms">
+      <div class="u"><b>u_time</b><span id="u_time">0.000</span></div>
+      <div class="u"><b>u_res</b><span id="u_res">0&times;0</span></div>
+      <div class="u"><b>u_ptr</b><span id="u_ptr">0.50, 0.50</span></div>
+      <div class="u"><b>boja</b><span id="u_col"><i class="swatch" id="sw"></i>#000000</span></div>
+    </div>
+
+    <div class="hint" id="hint">Povuci prstom po ekranu &mdash; pointer pomiče žarište. Za cijeli ekran: Podijeli &rarr; Dodaj na početni zaslon.</div>
+  </div>
+
+  <button class="btn peek" id="show">Prikaži HUD</button>
+</div>
+
+<script>
+(function(){
+  var canvas = document.getElementById('gl');
+  var gl = canvas.getContext('webgl', {alpha:false, antialias:false, depth:false, stencil:false, powerPreference:'high-performance'})
+        || canvas.getContext('experimental-webgl', {alpha:false, antialias:false});
+
+  if(!gl){
+    document.getElementById('hint').textContent = 'Ovaj preglednik nema WebGL, pa se shader ne može prikazati.';
+    return;
+  }
+
+  var VS = [
+    'attribute vec2 a_pos;',
+    'void main(){ gl_Position = vec4(a_pos, 0.0, 1.0); }'
+  ].join('\n');
+
+  var FS = [
+    'precision highp float;',
+    'uniform vec2  u_res;',
+    'uniform float u_time;',
+    'uniform vec2  u_ptr;',
+    'uniform float u_mode;',
+    '',
+    'vec3 hsv2rgb(vec3 c){',
+    '  vec3 p = abs(fract(c.xxx + vec3(0.0, 2.0/3.0, 1.0/3.0)) * 6.0 - 3.0);',
+    '  return c.z * mix(vec3(1.0), clamp(p - 1.0, 0.0, 1.0), c.y);',
+    '}',
+    'float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }',
+    'float noise(vec2 p){',
+    '  vec2 i = floor(p), f = fract(p);',
+    '  vec2 u = f * f * (3.0 - 2.0 * f);',
+    '  return mix(mix(hash(i), hash(i + vec2(1.0,0.0)), u.x),',
+    '             mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y);',
+    '}',
+    'float fbm(vec2 p){',
+    '  float a = 0.5, s = 0.0;',
+    '  for(int i = 0; i < 5; i++){ s += a * noise(p); p *= 2.03; a *= 0.5; }',
+    '  return s;',
+    '}',
+    '',
+    'void main(){',
+    '  float m = min(u_res.x, u_res.y);',
+    '  vec2 p  = (gl_FragCoord.xy - 0.5 * u_res) / m;',
+    '  vec2 pt = (u_ptr - 0.5 * u_res) / m;',
+    '  float t = u_time;',
+    '  float d = length(p - pt);',
+    '  vec3 col;',
+    '',
+    '  if(u_mode < 0.5){',
+    '    // Spektar: ton se ravnomjerno vrti s proteklim vremenom',
+    '    float h = fract(t * 0.055 + p.x * 0.16 + p.y * 0.11 - d * 0.22);',
+    '    float band = 0.5 + 0.5 * sin(d * 7.0 - t * 0.9);',
+    '    col = hsv2rgb(vec3(h, 0.58 + 0.18 * band, 0.96 - 0.30 * d));',
+    '  } else if(u_mode < 1.5){',
+    '    // Plazma: zbroj sinusa pomaknutih u vremenu',
+    '    float v = sin(p.x * 3.1 + t)',
+    '            + sin(p.y * 3.6 - t * 0.83)',
+    '            + sin((p.x + p.y) * 2.3 + t * 0.61)',
+    '            + sin(length(p - pt) * 6.4 - t * 1.45);',
+    '    float h = fract(v * 0.11 + t * 0.028);',
+    '    col = hsv2rgb(vec3(h, 0.72, 0.52 + 0.44 * sin(v * 1.1)));',
+    '  } else {',
+    '    // Aurora: dvostruko savijanje domene fbm-om',
+    '    vec2 q = vec2(fbm(p * 1.8 + t * 0.055), fbm(p * 1.8 + vec2(5.2, 1.3) - t * 0.041));',
+    '    vec2 r = vec2(fbm(p * 1.8 + 3.0 * q + t * 0.033 + pt), fbm(p * 1.8 + 3.0 * q + vec2(8.3, 2.8)));',
+    '    float f = fbm(p * 1.8 + 3.2 * r);',
+    '    float h = fract(0.56 + f * 0.55 + t * 0.019);',
+    '    col = hsv2rgb(vec3(h, 0.46 + 0.34 * f, clamp(0.10 + f * 1.25, 0.0, 1.0)));',
+    '  }',
+    '',
+    '  col *= 1.0 - 0.28 * dot(p, p);',
+    '  col += (hash(gl_FragCoord.xy + fract(t)) - 0.5) * 0.022;',
+    '  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);',
+    '}'
+  ].join('\n');
+
+  function compile(type, src){
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  var prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  var loc = gl.getAttribLocation(prog, 'a_pos');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+  var uRes  = gl.getUniformLocation(prog, 'u_res');
+  var uTime = gl.getUniformLocation(prog, 'u_time');
+  var uPtr  = gl.getUniformLocation(prog, 'u_ptr');
+  var uMode = gl.getUniformLocation(prog, 'u_mode');
+
+  // ---- stanje ----
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var state = {
+    elapsed: 0,      // sekunde od pokretanja (stoji dok je pauza)
+    shaderT: 0,      // vrijeme skalirano brzinom, ide u u_time
+    mode: 0,
+    speed: reduce ? 0.35 : 1,
+    paused: reduce
+  };
+  var boot = (window.claude && window.claude.hot && window.claude.hot.data) || null;
+  if(boot && typeof boot.elapsed === 'number'){
+    state.elapsed = boot.elapsed; state.shaderT = boot.shaderT;
+    state.mode = boot.mode; state.speed = boot.speed; state.paused = boot.paused;
+  }
+
+  var W = 0, H = 0, dpr = 1;
+  var ptr = {x:0, y:0, tx:0, ty:0, set:false};
+
+  function resize(){
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var r = canvas.getBoundingClientRect();
+    var w = Math.max(1, Math.round(r.width  * dpr));
+    var h = Math.max(1, Math.round(r.height * dpr));
+    if(w === W && h === H) return;
+    W = w; H = h; canvas.width = W; canvas.height = H;
+    gl.viewport(0, 0, W, H);
+    if(!ptr.set){ ptr.x = ptr.tx = W * 0.5; ptr.y = ptr.ty = H * 0.5; }
+    elRes.textContent = W + '×' + H;
+  }
+
+  // ---- DOM ----
+  var elSec = document.getElementById('tsec'), elMs = document.getElementById('tms');
+  var elTime = document.getElementById('u_time'), elRes = document.getElementById('u_res');
+  var elPtr = document.getElementById('u_ptr'), elCol = document.getElementById('u_col');
+  var sw = document.getElementById('sw');
+  var chips = [document.getElementById('m0'), document.getElementById('m1'), document.getElementById('m2')];
+  var playBtn = document.getElementById('play'), resetBtn = document.getElementById('reset');
+  var hideBtn = document.getElementById('hide'), showBtn = document.getElementById('show');
+  var speedIn = document.getElementById('speed'), speedVal = document.getElementById('speedval');
+
+  function syncUI(){
+    for(var i = 0; i < chips.length; i++) chips[i].setAttribute('aria-pressed', String(i === state.mode));
+    playBtn.textContent = state.paused ? 'Kreni' : 'Pauza';
+    speedIn.value = String(state.speed);
+    speedVal.textContent = state.speed.toFixed(2) + '×';
+  }
+
+  for(var i = 0; i < chips.length; i++){
+    (function(idx){ chips[idx].addEventListener('click', function(){ state.mode = idx; syncUI(); }); })(i);
+  }
+  playBtn.addEventListener('click', function(){ state.paused = !state.paused; syncUI(); });
+  resetBtn.addEventListener('click', function(){ state.elapsed = 0; state.shaderT = 0; });
+  speedIn.addEventListener('input', function(){ state.speed = parseFloat(speedIn.value); syncUI(); });
+  hideBtn.addEventListener('click', function(){ document.body.classList.add('bare'); });
+  showBtn.addEventListener('click', function(){ document.body.classList.remove('bare'); });
+  canvas.addEventListener('dblclick', function(){ document.body.classList.toggle('bare'); });
+
+  function movePtr(e){
+    var r = canvas.getBoundingClientRect();
+    var cx, cy;
+    if(e.touches && e.touches.length){ cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
+    else { cx = e.clientX; cy = e.clientY; }
+    ptr.tx = (cx - r.left) * dpr;
+    ptr.ty = (r.bottom - cy) * dpr;   // GL ishodište je dolje lijevo
+    ptr.set = true;
+  }
+  canvas.addEventListener('pointermove', movePtr);
+  canvas.addEventListener('pointerdown', movePtr);
+  canvas.addEventListener('touchmove', function(e){ movePtr(e); e.preventDefault(); }, {passive:false});
+
+  window.addEventListener('resize', resize);
+  if(window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
+
+  // ---- petlja ----
+  var last = performance.now(), fCount = 0, px = new Uint8Array(4);
+  function hex(n){ var s = n.toString(16); return s.length < 2 ? '0' + s : s; }
+
+  function frame(now){
+    var dt = Math.min((now - last) / 1000, 0.1); last = now;
+    if(!state.paused){ state.elapsed += dt; state.shaderT += dt * state.speed; }
+
+    resize();
+    ptr.x += (ptr.tx - ptr.x) * 0.12;
+    ptr.y += (ptr.ty - ptr.y) * 0.12;
+
+    gl.uniform2f(uRes, W, H);
+    gl.uniform1f(uTime, state.shaderT);
+    gl.uniform2f(uPtr, ptr.x, ptr.y);
+    gl.uniform1f(uMode, state.mode);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    if((fCount++ & 7) === 0){
+      var total = state.elapsed;
+      var mm = Math.floor(total / 60), ss = Math.floor(total % 60);
+      elSec.textContent = (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
+      elMs.textContent = '.' + ('0' + Math.floor((total % 1) * 100)).slice(-2);
+      elTime.textContent = state.shaderT.toFixed(3);
+      elPtr.textContent = (ptr.x / Math.max(W,1)).toFixed(2) + ', ' + (ptr.y / Math.max(H,1)).toFixed(2);
+      gl.readPixels(W >> 1, H >> 1, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      var h = '#' + hex(px[0]) + hex(px[1]) + hex(px[2]);
+      sw.style.background = h;
+      elCol.lastChild.nodeValue = h;
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function start(){
+    syncUI(); resize(); requestAnimationFrame(frame);
+    if(window.claude && window.claude.hot && window.claude.hot.snapshot){
+      window.claude.hot.snapshot(function(){ return state; });
+    }
+  }
+  if(window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(start);
+  else start();
+})();
+</script>
+</body>
+</html>
