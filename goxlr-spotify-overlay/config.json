@@ -1,0 +1,17 @@
+{
+  "websocket_url": "ws://127.0.0.1:14564/api/websocket",
+  "serial": null,
+  "trigger_channel": "Music",
+  "hold_seconds": 3.5,
+  "blink_interval": 0.45,
+  "spotify_app_match": "spotify",
+  "previous_double_press": false,
+  "restore_mute_state": true,
+
+  "buttons": {
+    "Chat":   { "action": "play_pause", "colour": "#fc0703", "blink": false },
+    "Mic":    { "action": "previous",   "colour": "#03fce3", "blink": false },
+    "System": { "action": "next",       "colour": "#03fce3", "blink": false },
+    "Music":  { "action": "exit_mode",  "colour": "#17fc03", "blink": true  }
+  }
+}
