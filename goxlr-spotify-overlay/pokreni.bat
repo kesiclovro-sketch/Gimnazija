@@ -30,7 +30,8 @@ if not exist ".venv\Scripts\python.exe" (
     echo.
 )
 
-".venv\Scripts\python.exe" goxlr_overlay.py %*
+if "%GOXLR_SCRIPT%"=="" set "GOXLR_SCRIPT=goxlr_overlay.py"
+".venv\Scripts\python.exe" "%GOXLR_SCRIPT%" %*
 set "CODE=%errorlevel%"
 
 echo.

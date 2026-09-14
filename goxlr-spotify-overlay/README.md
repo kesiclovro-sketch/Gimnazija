@@ -78,23 +78,38 @@ Zatim pokreni GoXLR Utility i provjeri da mu je ikona u traci.
 ### 3. Prijenos profila iz sluzbene aplikacije
 
 **Ovo nemoj preskociti.** GoXLR Utility se pokrece sa svojim praznim zadanim
-profilom, pa na prvi pogled izgleda kao da su sve postavke nestale. Nisu -
-profili sluzbene aplikacije i dalje su netaknuti na disku, samo ih Utility jos
-nije ucitao.
+profilom, pa na prvi pogled izgleda kao da su sve postavke nestale. **Nisu** -
+profili sluzbene aplikacije i dalje su netaknuti u `Documents\GoXLR`, samo ih
+Utility jos nije ucitao.
 
-1. U GoXLR Utilityju otvori **Profiles** i klikni **ikonu mape** gore desno u
-   tom okviru. Otvorit ce se mapa u koju Utility sprema profile.
-2. U drugom prozoru otvori mapu sluzbene aplikacije:
-   `C:\Users\<tvoje ime>\Documents\GoXLR\Profiles`
-3. Kopiraj svoje `.goxlr` datoteke iz mape sluzbene aplikacije u mapu koju ti
-   je Utility otvorio.
-4. Isto ponovi za mikrofon: u okviru **Mic Profiles** klikni ikonu mape, pa
-   kopiraj datoteke iz `C:\Users\<tvoje ime>\Documents\GoXLR\MicProfiles`.
-5. Vrati se u Utility, osvjezi popis i **klikni svoj profil** da ga ucita.
+Dvoklik na **`vrati_profile.bat`** i to je to. Program ce:
+
+* pitati Utility gdje su njegove mape za profile,
+* pronaci mapu sluzbene aplikacije (snalazi se i kad ju je OneDrive preselio),
+* **kopirati** `.goxlr` i `.goxlrMicProfile` datoteke k Utilityju,
+* ponuditi popis profila i ucitati onaj koji odaberes.
+
+Nista se ne brise i ne premjesta; datoteke sluzbene aplikacije ostaju gdje
+jesu. Ako kod Utilityja vec postoji datoteka istog imena, a drukcijeg sadrzaja,
+ne dira se nego ti se ispise.
+
+<details>
+<summary>Isto to rucno, ako radije sam</summary>
+
+1. U Utilityju otvori **Profiles** i klikni **ikonu mape** gore desno u tom
+   okviru - otvorit ce se mapa u koju Utility sprema profile.
+2. U drugom prozoru otvori `C:\Users\<tvoje ime>\Documents\GoXLR\Profiles`.
+3. Kopiraj `.goxlr` datoteke iz druge mape u prvu.
+4. Isto za mikrofon: okvir **Mic Profiles** -> ikona mape, pa kopiraj iz
+   `Documents\GoXLR\MicProfiles`.
+5. Klikni svoj profil u Utilityju da ga ucita.
+
+</details>
 
 Tek kad ti se profil ucita, slideri ce opet biti Mic / Chat / Music / System,
 sto je ovom dodatku i potrebno. Ako profil nije ucitan, program ce se javiti
-porukom da kanal `Music` nije ni na jednom slideru.
+porukom da kanal `Music` nije ni na jednom slideru i nabrojati koje je kanale
+nasao.
 
 ### 4. Python
 
@@ -228,8 +243,9 @@ Prolazi kroz: drzanje 3.5 s (skraceno radi brzine), postavljanje boja,
 treperenje, sve tri medijske akcije, ponistavanje muteova, izlazak iz nacina
 rada i povratak boja na pocetne.
 
-Dijagnostika se testira zasebno:
+Dijagnostika i prijenos profila testiraju se zasebno:
 
 ```
 python test/test_doktor.py
+python test/test_vrati_profile.py
 ```

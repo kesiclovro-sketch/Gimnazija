@@ -33,6 +33,11 @@ def initial_status() -> dict:
         }
     return {
         "config": {"http_settings": {"enabled": True, "port": 14564}},
+        "paths": {
+            "profile_directory": "",
+            "mic_profile_directory": "",
+        },
+        "files": {"profiles": [], "mic_profiles": []},
         "mixers": {
             SERIAL: {
                 "hardware": {"serial_number": SERIAL, "device_type": "Mini"},
@@ -75,6 +80,25 @@ class MockDaemon:
         self.press_time: dict[str, float] = {}
         self.hold_handled: set[str] = set()
         self.colour_calls: list[tuple] = []
+        self.loaded: list[tuple[str, str]] = []
+
+    def refresh_files(self) -> None:
+        """Kao pravi daemon: popis profila dolazi iz sadrzaja mapa."""
+        import pathlib
+
+        for key, files_key, extension in (
+            ("profile_directory", "profiles", "goxlr"),
+            ("mic_profile_directory", "mic_profiles", "goxlrMicProfile"),
+        ):
+            directory = self.status["paths"].get(key)
+            if not directory:
+                continue
+            path = pathlib.Path(directory)
+            if not path.is_dir():
+                continue
+            self.status["files"][files_key] = sorted(
+                item.stem for item in path.glob(f"*.{extension}")
+            )
 
     @property
     def mixer(self) -> dict:
@@ -165,6 +189,10 @@ class MockDaemon:
             )
             return "Ok"
 
+        if name in ("LoadProfile", "LoadMicProfile"):
+            self.loaded.append((name, args[0]))
+            return "Ok"
+
         if name == "SetFaderMuteState":
             fader, state = args
             await self.mutate(
@@ -183,6 +211,7 @@ class MockDaemon:
                 data = request["data"]
 
                 if data == "GetStatus":
+                    self.refresh_files()
                     response = {"Status": copy.deepcopy(self.status)}
                 elif data == "Ping":
                     response = "Ok"
