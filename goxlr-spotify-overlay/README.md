@@ -75,12 +75,33 @@ automatskog pokretanja, inace ce ti se vratiti nakon svakog restarta i
 
 Zatim pokreni GoXLR Utility i provjeri da mu je ikona u traci.
 
-### 3. Python
+### 3. Prijenos profila iz sluzbene aplikacije
+
+**Ovo nemoj preskociti.** GoXLR Utility se pokrece sa svojim praznim zadanim
+profilom, pa na prvi pogled izgleda kao da su sve postavke nestale. Nisu -
+profili sluzbene aplikacije i dalje su netaknuti na disku, samo ih Utility jos
+nije ucitao.
+
+1. U GoXLR Utilityju otvori **Profiles** i klikni **ikonu mape** gore desno u
+   tom okviru. Otvorit ce se mapa u koju Utility sprema profile.
+2. U drugom prozoru otvori mapu sluzbene aplikacije:
+   `C:\Users\<tvoje ime>\Documents\GoXLR\Profiles`
+3. Kopiraj svoje `.goxlr` datoteke iz mape sluzbene aplikacije u mapu koju ti
+   je Utility otvorio.
+4. Isto ponovi za mikrofon: u okviru **Mic Profiles** klikni ikonu mape, pa
+   kopiraj datoteke iz `C:\Users\<tvoje ime>\Documents\GoXLR\MicProfiles`.
+5. Vrati se u Utility, osvjezi popis i **klikni svoj profil** da ga ucita.
+
+Tek kad ti se profil ucita, slideri ce opet biti Mic / Chat / Music / System,
+sto je ovom dodatku i potrebno. Ako profil nije ucitan, program ce se javiti
+porukom da kanal `Music` nije ni na jednom slideru.
+
+### 4. Python
 
 Instaliraj **Python 3.10 ili noviji** s <https://www.python.org/downloads/>
 i pri instalaciji stavi kvacicu na **"Add python.exe to PATH"**.
 
-### 4. Pokreni
+### 5. Pokreni
 
 Dvoklik na **`pokreni.bat`**. Prvi put ce sam napraviti virtualno okruzenje i
 instalirati ovisnosti, pa se pokrenuti.
@@ -103,6 +124,17 @@ Za izlaz pritisni `Ctrl+C` - boje i mute stanja se vracaju na zatecene.
 
 Sve sto program ispise zapisuje se i u `goxlr_overlay.log`, pa se ima sto
 poslati ako nesto ne stima.
+
+## Predomislio si se? Povratak na sluzbenu aplikaciju
+
+Nista nije izgubljeno i nista se ne mora vracati rucno:
+
+1. Ugasi GoXLR Utility (desni klik na ikonu u traci -> Quit). Po zelji ga
+   deinstaliraj kroz Postavke -> Aplikacije.
+2. Pokreni sluzbenu **GoXLR App** i ucitaj svoj profil.
+
+Profili sluzbene aplikacije u `Documents\GoXLR` cijelo vrijeme ostaju
+netaknuti - Utility ih samo cita kad ih sam kopiras k sebi.
 
 ## Kad nesto ne radi: `dijagnostika.bat`
 

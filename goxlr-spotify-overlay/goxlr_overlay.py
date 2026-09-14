@@ -228,8 +228,18 @@ class GoXLROverlay:
             (b for b, c in self.button_channel.items() if c == trigger_channel), None
         )
         if self.trigger_button is None:
+            present = ", ".join(
+                sorted(d["channel"] for d in mixer["fader_status"].values())
+            )
             raise RuntimeError(
-                f"Kanal za aktivaciju ({trigger_channel}) nije ni na jednom slideru."
+                f"Kanal '{trigger_channel}' nije ni na jednom slideru. Na uredaju su: "
+                f"{present}.\n"
+                "        Najcesci uzrok: GoXLR Utility je ucitao svoj prazan profil "
+                "umjesto tvojeg.\n"
+                "        Prenesi profil iz sluzbene aplikacije (upute su u README.md, "
+                "odjeljak\n"
+                "        'Prijenos profila iz sluzbene aplikacije'), pa ga ucitaj u "
+                "Utilityju."
             )
         log.info(
             "Drzi mute tipku kanala %s %.1fs za ulazak u Spotify nacin rada.",
