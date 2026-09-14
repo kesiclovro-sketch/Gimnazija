@@ -18,6 +18,16 @@ na ono sto je postavljeno u GoXLR aplikaciji/profilu.
 
 ---
 
+> ### PRVO OVO
+> Program **ne radi sa sluzbenom TC-Helicon "GoXLR App"** - ona nema API pa se
+> na nju nema kako zakaciti. Treba ti **GoXLR Utility** (besplatan, ucitava
+> tvoje postojece profile), a sluzbena app mora biti **ugasena**.
+>
+> Ako tipke samo blinkaju i nista se ne dogada na Spotifyu, to nije ovaj
+> program nego tvornicko ponasanje GoXLR-a: kratak pritisak muteira kanal, a
+> firmware tada sam blinka tipku. Znaci da se program nije spojio.
+> Pokreni **`dijagnostika.bat`** - tocno ce ti reci sto nedostaje.
+
 ## Vazno prije pocetka: sluzbena GoXLR App nije dovoljna
 
 Sluzbena TC-Helicon **GoXLR App**
@@ -65,6 +75,28 @@ Program sam otkriva na kojem je slideru koji kanal, pa je svejedno kojim si ih
 redom posloz'o u profilu.
 
 Za izlaz pritisni `Ctrl+C` - boje i mute stanja se vracaju na zatecene.
+
+Sve sto program ispise zapisuje se i u `goxlr_overlay.log`, pa se ima sto
+poslati ako nesto ne stima.
+
+## Kad nesto ne radi: `dijagnostika.bat`
+
+Dvoklik na **`dijagnostika.bat`**. Provjerit ce redom:
+
+1. slusa li itko na portu GoXLR Utilityja,
+2. vidi li daemon tvoj uredaj,
+3. koji je kanal na kojem slideru,
+4. **stizu li uopce pritisci tipki** - zadnjih 30 sekundi ceka da pritiskas
+   mute tipke i ispisuje svaki pritisak i otpustanje.
+
+Najcesci ishodi:
+
+| Sto pise | Sto znaci |
+|---|---|
+| "NE MOGU SE SPOJITI" | GoXLR Utility nije instaliran ili nije pokrenut. |
+| "GoXLR Utility radi, ali NE VIDI NIJEDAN UREDAJ" | Sluzbena GoXLR App je jos upaljena i drzi uredaj, ili je problem s USB-om. |
+| "NISAM vidio nista" dok pritiskas tipke | Uredaj drzi netko drugi - gotovo uvijek sluzbena GoXLR App. |
+| "Vidio sam N pritisaka - komunikacija radi" | Sve je u redu; ako overlay i dalje ne reagira, posalji mi taj ispis. |
 
 ## Kako cilja bas Spotify
 
@@ -138,3 +170,9 @@ python test/test_overlay.py
 Prolazi kroz: drzanje 3.5 s (skraceno radi brzine), postavljanje boja,
 treperenje, sve tri medijske akcije, ponistavanje muteova, izlazak iz nacina
 rada i povratak boja na pocetne.
+
+Dijagnostika se testira zasebno:
+
+```
+python test/test_doktor.py
+```

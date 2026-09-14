@@ -30,6 +30,7 @@ from pathlib import Path
 
 import websockets
 
+import doktor
 import media_control
 from jsonpatch_lite import apply_patch
 
@@ -129,6 +130,9 @@ class GoXLROverlay:
         self._blink_task: asyncio.Task | None = None
         self._events: asyncio.Queue | None = None
         self._stopping = False
+        self._warned_offline = False
+        self._seen_button_event = False
+        self._warned_no_buttons = False
 
     # ------------------------------------------------------------------ IPC
 
@@ -347,6 +351,7 @@ class GoXLROverlay:
             if is_down == was_down:
                 continue
             self.button_down[button] = is_down
+            self._seen_button_event = True
             if is_down:
                 self.press_start[button] = time.monotonic()
                 self.hold_consumed.discard(button)
@@ -366,6 +371,8 @@ class GoXLROverlay:
         protecting = self.active or bool(self.press_start)
         for fader, state in mute_states.items():
             if not protecting:
+                if state != self.saved_mute.get(fader) and not self._seen_button_event:
+                    self._warn_no_button_events()
                 self.saved_mute[fader] = state
                 continue
             wanted = self.saved_mute.get(fader, "Unmuted")
@@ -377,6 +384,17 @@ class GoXLROverlay:
             self._last_restore[fader] = now
             log.debug("Vracam mute slidera %s na %s", fader, wanted)
             await self.set_mute_state(fader, wanted)
+
+    def _warn_no_button_events(self) -> None:
+        """Mute se mijenja, ali stanje tipki ne stize - bez toga nema drzanja."""
+        if self._warned_no_buttons:
+            return
+        self._warned_no_buttons = True
+        log.warning(
+            "GoXLR javlja promjenu mutea, ali ne i pritiske tipki. Bez toga ne "
+            "mogu izmjeriti drzanje od %.1f s. Pokreni dijagnostika.bat.",
+            self.hold_seconds,
+        )
 
     async def on_release(self, button: str, held: float, consumed: bool) -> None:
         channel = self.button_channel.get(button, "?")
@@ -509,9 +527,18 @@ class GoXLROverlay:
 
     async def run_forever(self) -> None:
         delay = 2.0
+        host, port = doktor.endpoint(self.config["websocket_url"])
         while not self._stopping:
+            if not await doktor.port_open(host, port):
+                if not self._warned_offline:
+                    self._warned_offline = True
+                    doktor.offline_help(host, port)
+                    log.info("Cekam da se GoXLR Utility pojavi ... (Ctrl+C za izlaz)")
+                await asyncio.sleep(3.0)
+                continue
             try:
                 await self.run_once()
+                self._warned_offline = False
                 delay = 2.0
             except (OSError, websockets.exceptions.WebSocketException) as error:
                 log.warning("Veza s GoXLR Utilityjem prekinuta (%s).", error)
@@ -531,8 +558,7 @@ class GoXLROverlay:
         self._stopping = True
 
 
-async def main_async(args: argparse.Namespace) -> int:
-    config = load_config(Path(args.config) if args.config else CONFIG_PATH)
+async def main_async(args: argparse.Namespace, config: dict) -> int:
     overlay = GoXLROverlay(config)
 
     loop = asyncio.get_running_loop()
@@ -557,20 +583,40 @@ async def main_async(args: argparse.Namespace) -> int:
     return 0
 
 
+def setup_logging(verbose: bool) -> None:
+    """Ispis u konzolu i u goxlr_overlay.log (da se ima sto poslati)."""
+    handlers: list[logging.Handler] = [logging.StreamHandler(sys.stdout)]
+    try:
+        handlers.append(logging.FileHandler(HERE / "goxlr_overlay.log", encoding="utf-8"))
+    except OSError:
+        pass
+    logging.basicConfig(
+        level=logging.DEBUG if verbose else logging.INFO,
+        format="%(asctime)s  %(levelname)-7s %(message)s",
+        datefmt="%H:%M:%S",
+        handlers=handlers,
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="GoXLR Mini -> Spotify overlay")
     parser.add_argument("-c", "--config", help="putanja do config.json")
     parser.add_argument("-v", "--verbose", action="store_true", help="detaljan ispis")
+    parser.add_argument(
+        "--doktor",
+        action="store_true",
+        help="provjeri vezu s GoXLR-om i pokazi sto program vidi",
+    )
     args = parser.parse_args()
 
-    logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(asctime)s  %(levelname)-7s %(message)s",
-        datefmt="%H:%M:%S",
-    )
+    setup_logging(args.verbose)
+
+    config = load_config(Path(args.config) if args.config else CONFIG_PATH)
 
     try:
-        return asyncio.run(main_async(args))
+        if args.doktor:
+            return asyncio.run(doktor.run(config))
+        return asyncio.run(main_async(args, config))
     except KeyboardInterrupt:
         return 0
 
