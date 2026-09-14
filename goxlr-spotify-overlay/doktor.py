@@ -59,8 +59,9 @@ def offline_help(host: str, port: int) -> None:
  nema nikakav API. Treba mu GoXLR Utility. Provjeri redom:
 
   1. Je li GoXLR Utility uopce instaliran?
-     -> https://github.com/GoXLR-on-Linux/goxlr-utility/releases
-        (na Windowsima uzmi datoteku koja zavrsava na .msi)
+     -> https://github.com/GoXLR-on-Linux/goxlr-utility/releases/latest
+        Pod "Assets" uzmi goxlr-utility-<verzija>.exe
+        (ako imas ARM racunalo: ...-arm64.exe)
 
   2. Je li pokrenut? Trazi njegovu ikonu u traci pored sata.
 

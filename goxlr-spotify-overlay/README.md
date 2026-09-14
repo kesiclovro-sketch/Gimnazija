@@ -52,13 +52,38 @@ Sto to znaci za tebe:
 
 ## Instalacija
 
-1. Instaliraj **Python 3.10 ili noviji** s <https://www.python.org/downloads/>
-   (kvacica na "Add python.exe to PATH" pri instalaciji).
-2. Instaliraj **GoXLR Utility** (Windows installer s gornjeg linka) i pokreni
-   ga. Provjeri da ti radi u traci (system tray).
-3. Ugasi sluzbenu **GoXLR App** i makni je iz automatskog pokretanja.
-4. Dvoklik na **`pokreni.bat`**. Prvi put ce sam napraviti virtualno okruzenje
-   i instalirati ovisnosti, pa se pokrenuti.
+### 1. GoXLR Utility
+
+Preuzmi ga sa stranice izdanja:
+<https://github.com/GoXLR-on-Linux/goxlr-utility/releases/latest>
+
+Pod naslovom **Assets** klikni datoteku **`goxlr-utility-<verzija>.exe`**
+(npr. `goxlr-utility-1.2.4.exe`). Ako imas ARM racunalo, uzmi
+`...-arm64.exe`. Ostale datoteke (`.deb`, `.rpm`, `.pkg`) su za Linux i Mac.
+
+Alternativa preko naredbenog retka: `winget search goxlr-utility` pa
+`winget install <id koji ti ispise>`.
+
+Drivere ne trebas dirati - GoXLR Utility koristi iste sluzbene TC-Helicon
+drivere koje vec imas jer si koristio sluzbenu aplikaciju.
+
+### 2. Ugasi sluzbenu GoXLR App
+
+Desni klik na njenu ikonu u traci pored sata -> Quit. Makni je i iz
+automatskog pokretanja, inace ce ti se vratiti nakon svakog restarta i
+"ukrasti" uredaj.
+
+Zatim pokreni GoXLR Utility i provjeri da mu je ikona u traci.
+
+### 3. Python
+
+Instaliraj **Python 3.10 ili noviji** s <https://www.python.org/downloads/>
+i pri instalaciji stavi kvacicu na **"Add python.exe to PATH"**.
+
+### 4. Pokreni
+
+Dvoklik na **`pokreni.bat`**. Prvi put ce sam napraviti virtualno okruzenje i
+instalirati ovisnosti, pa se pokrenuti.
 
 Ako sve radi, u prozoru ces vidjeti nesto poput:
 
